@@ -162,9 +162,10 @@ relative to the latest available comparable data, not the present day.
   print at the end is more legible.
 - **Backoff with jitter.** Linear 2 s retry is plenty when 503 is the only
   expected error and the call cadence is low.
-- **Broader test coverage.** Seven tests cover the cache, sparse-data branch,
-  503 retry, approval gate routing, data-check routing, and write tool
-  isolation. Agent-loop tests with a stubbed LLM are the next investment.
+- **Broader test coverage.** Nine unit tests cover the cache, sparse-data
+  branch, 503 retry, both conditional routers, write tool isolation, and the
+  execute-node tool loop driven by a scripted stand-in LLM. A full-graph
+  end-to-end test and an eval harness are the next investment.
 - **React chart frontend (bonus).** Matplotlib PNGs are saved to `./charts/`.
   React + Recharts is the natural next step.
 
@@ -218,7 +219,7 @@ relative to the latest available comparable data, not the present day.
 ├── main.py                    CLI entry point
 ├── tests/
 │   ├── test_data_layer.py     cache, sparse-data, and 503 retry tests
-│   └── test_agent.py          approval gate routing + tool isolation tests
+│   └── test_agent.py          routing, tool isolation, and execute-loop tests
 ├── requirements.txt
 └── .gitignore
 ```
