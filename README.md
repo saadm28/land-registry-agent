@@ -26,14 +26,17 @@ cp .env.example .env
 # open .env and replace sk-your-key-here with your OpenAI key
 
 # 3. Run the agent
-.venv/bin/python main.py               # interactive: prompts at the approval gate
+.venv/bin/python main.py                 # interactive: prompts at the approval gate
 .venv/bin/python main.py --auto-approve  # bypass the prompt (demos / CI)
+.venv/bin/python main.py --verbose       # add INFO logging (LLM calls, cache hits)
 ```
+
+The `--auto-approve` and `--verbose` flags can be combined.
 
 Other useful commands:
 
 ```bash
-.venv/bin/pytest -v             # unit tests on the data layer
+.venv/bin/pytest -v             # unit tests (data layer + agent routing)
 .venv/bin/python data_layer.py  # smoke-test live endpoints (no LLM cost)
 ```
 
