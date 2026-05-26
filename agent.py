@@ -106,7 +106,7 @@ EXECUTE_SYSTEM = (
     "You are gathering data to answer the user. Use the available tools to "
     "fetch: (1) GU1 area transactions, (2) top streets in GU1, (3) regional "
     "HPI for south-east. Call tools in parallel where useful. Stop calling "
-    "tools once you have all three datasets — do not summarise or analyse "
+    "tools once you have all three datasets. Do not summarise or analyse "
     "yet; that comes later."
 )
 
@@ -119,7 +119,7 @@ def _summarise_transactions(payload: dict) -> str:
         f"Retrieved {payload['count']} GU1 transactions "
         f"({dr.get('min')} to {dr.get('max')}). "
         f"Average price £{payload['average_price']:,.0f}. "
-        f"{'Sparse data — confidence low.' if payload.get('sparse_data') else 'Data cached for session.'}"
+        f"{'Sparse data; confidence low.' if payload.get('sparse_data') else 'Data cached for session.'}"
     )
 
 
@@ -143,7 +143,7 @@ def _summarise_hpi(payload: dict) -> str:
     return (
         f"Retrieved {len(recs)} monthly HPI records for {payload['region']}. "
         f"Most recent period: {latest['period']}, average price £{latest['avg_price']}. "
-        f"Note: HPI data ceilings at 2016-03 — analysis uses most recent available window."
+        f"Note: HPI data ceilings at 2016-03; analysis uses most recent available window."
     )
 
 
@@ -215,7 +215,7 @@ def execute_node(state: AgentState) -> dict:
     if missing:
         _trace(
             state,
-            "Data fetch incomplete — aborting",
+            "Data fetch incomplete, aborting",
             f"Required payload(s) missing after execute loop: {', '.join(missing)}. "
             "Cannot analyse on empty data. Check endpoint availability and retry.",
         )
@@ -251,17 +251,19 @@ ANALYSE_SYSTEM = (
     "the available window, (2) comparison with the South East regional HPI, "
     "(3) the highest-value streets, (4) an explicit note that HPI data "
     "ceilings at 2016-03 so the comparison uses the most recent available "
-    "window, not the present day. Be concise — one paragraph, ~120 words. "
+    "window, not the present day. Be concise: one paragraph, ~120 words. "
     "Do not invent numbers; only use figures present in the provided context. "
     "If the context includes 'sparse_data': true, explicitly state that "
     "confidence is low due to limited transaction volume."
 )
 
 
-def _monthly_gu1_trend(transactions_payload: dict) -> list[dict]:
-    """Aggregate transactions into a monthly avg price series in Python."""
-    # The tool returns a summary payload; re-fetch from data_layer (cache hit)
-    # to get the full transaction set for charting.
+def _monthly_gu1_trend() -> list[dict]:
+    """Aggregate transactions into a monthly avg price series in Python.
+
+    Re-fetches the full transaction set from data_layer (a cache hit after
+    execute_node) because the tool payload only carries a summary, not every row.
+    """
     import data_layer
 
     txns = data_layer.get_transactions("GU1")
@@ -306,7 +308,7 @@ def _save_charts(chart_data: dict) -> list[str]:
                 label="GU1 monthly avg", marker="o", markersize=3)
         ax.plot([p["period"] for p in se], [p["avg_price"] for p in se],
                 label="South East HPI", marker="s", markersize=3)
-        ax.set_title("GU1 vs South East — monthly average price")
+        ax.set_title("GU1 vs South East monthly average price")
         ax.set_xlabel("Period")
         ax.set_ylabel("Avg price (£)")
         ax.legend()
@@ -365,7 +367,7 @@ def analyse_node(state: AgentState) -> dict:
     note = response.content if isinstance(response.content, str) else str(response.content)
 
     chart_data: dict[str, Any] = {
-        "gu1_trend": _monthly_gu1_trend(txns),
+        "gu1_trend": _monthly_gu1_trend(),
         "south_east_trend": _se_trend(hpi),
         "top_streets": _top_streets_chart(streets),
     }
@@ -394,7 +396,7 @@ def approval_gate(state: AgentState) -> dict:
     auto = bool(state.get("auto_approve"))
 
     print("\n" + "=" * 60)
-    print("RESEARCH NOTE READY — REVIEW BEFORE WRITING")
+    print("RESEARCH NOTE READY - REVIEW BEFORE WRITING")
     print("=" * 60)
     print(f"\n{note}\n")
     print("=" * 60)

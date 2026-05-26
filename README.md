@@ -1,8 +1,8 @@
 # Land Registry Research Agent
 
 An agentic pipeline that retrieves UK Land Registry data for **GU1 (Guildford)**,
-reasons over it to produce a one-paragraph research note, and — only after an
-**explicit user approval gate** — writes that note to a mock tracking sheet.
+reasons over it to produce a one-paragraph research note, and only after an
+**explicit user approval gate**, writes that note to a mock tracking sheet.
 
 The exercise uses UK Land Registry data as a structural proxy for Petex's real
 simulation tools (PROSPER, GAP, MBAL). The architecture is what matters: the
@@ -37,7 +37,7 @@ Other useful commands:
 .venv/bin/python data_layer.py  # smoke-test live endpoints (no LLM cost)
 ```
 
-The first SPARQL call takes ~20–30 s (live endpoint is slow). Subsequent calls
+The first SPARQL call takes ~20-30 s (live endpoint is slow). Subsequent calls
 hit the in-memory cache. PNG charts are written to `./charts/`.
 
 ---
@@ -56,7 +56,7 @@ START -> plan -> execute --(data ok?)--> analyse -> approval_gate
 
 | Layer | File | Responsibility |
 |---|---|---|
-| Models | [models.py](models.py) | Pydantic + `AgentState` TypedDict — every cross-layer value is typed |
+| Models | [models.py](models.py) | Pydantic + `AgentState` TypedDict; every cross-layer value is typed |
 | Data access | [data_layer.py](data_layer.py) | API wrappers, in-memory cache, 503 retry, sparse-data warnings |
 | Tools | [tools.py](tools.py) | LangGraph `@tool` functions wrapping the data layer |
 | Agent | [agent.py](agent.py) | `StateGraph`: plan → execute → analyse → approval → write |
@@ -66,7 +66,7 @@ START -> plan -> execute --(data ok?)--> analyse -> approval_gate
 ### Why LangGraph
 
 Explicit node separation is the whole point of this exercise. Petex's platform
-mirrors this shape — plan, execute, interpret, gate, write — and `StateGraph`
+mirrors this shape (plan, execute, interpret, gate, write) and `StateGraph`
 with named nodes maps onto it cleanly. A `create_react_agent` would have done
 the job in fewer lines but hidden the approval gate inside the agent's tool
 choice instead of making it a first-class node with a conditional edge.
@@ -78,7 +78,7 @@ Two reinforcing mechanisms, in order of importance:
 1. **Graph topology.** `write_research_note` is bound **only** on `write_node`.
    `write_node` is only reachable from `approval_gate` via a conditional edge
    that returns `END` unless `state["approved"]` is `True`. There is no path
-   from `execute_node` to `write_node`. The LLM cannot decide to write — only
+   from `execute_node` to `write_node`. The LLM cannot decide to write; only
    the user can.
 2. **Tool docstring.** `write_research_note`'s docstring explicitly says
    "Only call after explicit user approval has been confirmed." This is a
@@ -100,30 +100,30 @@ on `get_top_streets`).
 
 ### Why a session-scoped in-memory cache
 
-A cold SPARQL call to GU1 takes 20–30 s. The agent fetches the same dataset
+A cold SPARQL call to GU1 takes 20-30 s. The agent fetches the same dataset
 twice in a single run (once for `fetch_area_transactions`, once for
 `fetch_top_streets`). A `dict` keyed by `(district, limit, from_date, to_date)`
 takes the second call to ~1 ms. Persistent caching would be the next
-investment but is out of scope at the 3–4 h budget.
+investment but is out of scope at the 3-4 h budget.
 
 ### Why a typed data layer with JSON tool boundaries
 
 Inside the data layer everything is `Transaction`, `StreetSummary`,
-`HPIRecord`. Tools take primitive args and return JSON strings — that is
+`HPIRecord`. Tools take primitive args and return JSON strings, which is
 what the LLM consumes. The Pydantic discipline is preserved everywhere it
 provides safety, and the LLM gets a familiar JSON surface. This split is
 what would let you swap Land Registry for PROSPER without touching `agent.py`.
 
-### Date-window handling — the asymmetry that almost bites you
+### Date-window handling: the asymmetry that almost bites you
 
 Price Paid transactions are current; the HPI endpoint ceilings at **2016-03**.
 The agent queries Price Paid for **2013-04 to 2016-03** to match the HPI window
 so that the "compare GU1 to South East regional average" part of the prompt
 is an apples-to-apples comparison rather than fresh GU1 transactions vs stale
-HPI. The trace and the research note both explicitly call this out — the
+HPI. The trace and the research note both explicitly call this out, so the
 agent does not claim to be reporting on "the present day."
 
-This is encoded as the **default** on `get_transactions(from_date, to_date)` —
+This is encoded as the **default** on `get_transactions(from_date, to_date)`:
 a naive call returns the HPI-aligned window, which is the only window in which
 the prompt's comparison is meaningful. Callers can pass `from_date` / `to_date`
 to override. The "last 3 years" phrasing in the user prompt is interpreted
@@ -173,7 +173,7 @@ relative to the latest available comparable data, not the present day.
    node, with `tool_name`, `args`, `result_summary`, `duration_ms`. Hook into
    LangSmith or whatever Petex picks for traces.
 2. **Real write target behind the same tool contract.** A Sheets / DOF
-   adapter swapped in where `mock_sheet.write` lives — the rest of the agent
+   adapter swapped in where `mock_sheet.write` lives; the rest of the agent
    doesn't move.
 3. **Persistent cache with `refPeriod`-aware invalidation.** Sqlite keyed by
    `(district, window)` and HPI `(region, refPeriod_max)`. Cold reads only
@@ -185,18 +185,18 @@ relative to the latest available comparable data, not the present day.
    shape (research note structure, chart_data keys, trace order) so a
    refactor doesn't silently change what the agent reports.
 6. **Frontend chart rendering.** A small React/Recharts component reading
-   `chart_data` JSON — straightforward, just out of scope here.
+   `chart_data` JSON; straightforward, just out of scope here.
 7. **Confidence scoring.** Where data is sparse or where top-street rankings
    are dominated by a few transactions, attach a numeric confidence score
    that the research-note prompt is required to surface.
 8. **Per-node model selection.** The agent uses `gpt-4o-mini` for every LLM
-   call. The plan and execute nodes are plumbing — model capability there is
+   call. The plan and execute nodes are plumbing; model capability there is
    not the bottleneck. The analyse node is where reasoning would actually
    benefit from a larger model. If input variety grew (sparser postcodes,
    contradictory signals, multi-region comparisons) I would upgrade only
    `analyse_node` to `gpt-4o`, keeping mini elsewhere. One constant per node;
-   five-minute change. Not justified by current output quality — `gpt-4o-mini`
-   produces a publishable note on this data — so I'm noting the pattern
+   five-minute change. Not justified by current output quality (`gpt-4o-mini`
+   produces a publishable note on this data), so I'm noting the pattern
    rather than implementing it speculatively.
 
 ---
@@ -206,7 +206,7 @@ relative to the latest available comparable data, not the present day.
 ```
 .
 ├── README.md                  this file
-├── data_sources.py            provided starter — not modified
+├── data_sources.py            provided starter, not modified
 ├── models.py                  Pydantic models + AgentState TypedDict
 ├── data_layer.py              data access + cache + retries
 ├── mock_sheet.py              mock write target
@@ -242,8 +242,8 @@ Step 3: Identified highest-value streets
 
 Step 4: Fetched South East regional house price index
         Retrieved 36 monthly HPI records for south-east. Most recent period:
-        2016-03, average price £266,729. Note: HPI data ceilings at 2016-03
-        — analysis uses most recent available window.
+        2016-03, average price £266,729. Note: HPI data ceilings at 2016-03;
+        analysis uses most recent available window.
 
 Step 5: Generated research note
         One-paragraph summary produced. 2 chart PNG(s) saved to ./charts/.
