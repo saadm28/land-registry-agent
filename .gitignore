@@ -1,0 +1,26 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+
+# Virtual env
+.venv/
+
+# Test cache
+.pytest_cache/
+
+# Generated charts
+charts/
+
+# macOS
+.DS_Store
+
+# Office temp files
+~$*
+
+# Claude Code local files
+.claude/
