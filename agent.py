@@ -140,9 +140,11 @@ def _summarise_hpi(payload: dict) -> str:
     if not recs:
         return "HPI endpoint returned no records."
     latest = recs[0]
+    avg = latest.get("avg_price")
+    avg_str = f"£{avg:,.0f}" if avg is not None else "n/a"
     return (
         f"Retrieved {len(recs)} monthly HPI records for {payload['region']}. "
-        f"Most recent period: {latest['period']}, average price £{latest['avg_price']}. "
+        f"Most recent period: {latest['period']}, average price {avg_str}. "
         f"Note: HPI data ceilings at 2016-03; analysis uses most recent available window."
     )
 

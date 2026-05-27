@@ -229,25 +229,27 @@ relative to the latest available comparable data, not the present day.
 ## Sample execution trace
 
 The trace is designed for a non-technical engineer to read top-to-bottom and
-understand exactly what the agent did:
+understand exactly what the agent did. The order of the data-fetch steps
+(2-4) is chosen by the LLM and can vary between runs; the example below is one
+real run.
 
 ```
 Step 1: Produced analysis plan
         LLM produced a numbered plan covering data fetch, analysis, and
         approval gate.
 
-Step 2: Fetched GU1 property transactions
-        Retrieved 500 GU1 transactions (2013-04-04 to 2016-03-31). Average
-        price £568,761. Data cached for session.
-
-Step 3: Identified highest-value streets
-        Top street: HIGH STREET, average £2,010,445 across 24 transactions.
-        5 streets ranked.
-
-Step 4: Fetched South East regional house price index
+Step 2: Fetched South East regional house price index
         Retrieved 36 monthly HPI records for south-east. Most recent period:
         2016-03, average price £266,729. Note: HPI data ceilings at 2016-03;
         analysis uses most recent available window.
+
+Step 3: Fetched GU1 property transactions
+        Retrieved 500 GU1 transactions (2013-04-04 to 2016-03-31). Average
+        price £568,761. Data cached for session.
+
+Step 4: Identified highest-value streets
+        Top street: HIGH STREET, average £2,010,445 across 24 transactions.
+        5 streets ranked.
 
 Step 5: Generated research note
         One-paragraph summary produced. 2 chart PNG(s) saved to ./charts/.
@@ -257,5 +259,5 @@ Step 6: User approved write action
 
 Step 7: Research note written to tracking sheet
         write_research_note tool invoked. Sheet response: Write logged
-        successfully at 2026-05-25T... (mock)
+        successfully at 2026-05-27T... (mock)
 ```
